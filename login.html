@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Form</title>
+    <style>
+        /* Basic Reset & Body Styling */
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Card Styles */
+        .card {
+            width: 100%;
+            max-width: 448px; /* max-w-md */
+            background-color: #fff;
+            border-radius: 8px; /* rounded-lg */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 24px; /* p-6 */
+            text-align: center; /* text-center */
+            border-bottom: 1px solid #e5e7eb; /* border-b */
+        }
+
+        .card-title {
+            font-size: 24px; /* text-2xl */
+            font-weight: 700; /* font-bold */
+            margin-bottom: 8px; /* mb-2 */
+            color: #1a202c; /* text-gray-900 */
+        }
+
+        .card-description {
+            font-size: 14px; /* text-sm */
+            color: #6b7280; /* text-gray-600 */
+        }
+
+        .card-content {
+            padding: 24px; /* p-6 */
+        }
+
+        /* Form Grouping */
+        .space-y-4 > *:not(:first-child) {
+            margin-top: 16px; /* space-y-4 */
+        }
+
+        .space-y-2 > *:not(:first-child) {
+            margin-top: 8px; /* space-y-2 */
+        }
+
+        /* Label Styles */
+        label {
+            display: block;
+            font-size: 14px; /* text-sm */
+            font-weight: 500; /* font-medium */
+            color: #1a202c; /* text-gray-900 */
+            margin-bottom: 4px;
+        }
+
+        /* Input Styles */
+        input[type="text"],
+        input[type="tel"],
+        input[type="password"],
+        select {
+            display: block;
+            width: 100%;
+            padding: 10px 12px; /* px-3 py-2 */
+            font-size: 16px; /* text-base */
+            line-height: 1.5;
+            color: #1a202c; /* text-gray-900 */
+            background-color: #fff;
+            border: 1px solid #d1d5db; /* border-gray-300 */
+            border-radius: 6px; /* rounded-md */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            box-sizing: border-box;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #2563eb; /* focus:border-blue-500 */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); /* focus:ring-blue-500 */
+        }
+
+        /* Button Styles */
+        button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%; /* w-full */
+            padding: 10px 16px; /* px-4 py-2 */
+            font-size: 16px; /* text-base */
+            font-weight: 500; /* font-medium */
+            line-height: 1.5;
+            border-radius: 6px; /* rounded-md */
+            cursor: pointer;
+            transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, color 0.15s ease-in-out, opacity 0.15s ease-in-out;
+            box-sizing: border-box;
+        }
+
+        button[type="submit"] {
+            color: #fff; /* text-white */
+            background-color: #2563eb; /* bg-blue-600 */
+            border: 1px solid transparent;
+        }
+
+        button[type="submit"]:hover:not(:disabled) {
+            background-color: #1d4ed8; /* hover:bg-blue-700 */
+        }
+
+        button[type="submit"]:disabled {
+            opacity: 0.5; /* disabled:opacity-50 */
+            cursor: not-allowed; /* disabled:cursor-not-allowed */
+        }
+
+        button.outline {
+            background-color: transparent; /* bg-transparent */
+            color: #1a202c; /* text-gray-900 */
+            border: 1px solid #d1d5db; /* border-gray-300 */
+        }
+
+        button.outline:hover:not(:disabled) {
+            background-color: #f3f4f6; /* hover:bg-gray-50 */
+        }
+
+        /* Alert Styles */
+        .alert {
+            padding: 12px 16px; /* p-3 px-4 */
+            border-radius: 6px; /* rounded-md */
+            margin-bottom: 16px; /* mb-4 */
+            font-size: 14px; /* text-sm */
+        }
+
+        .alert-destructive {
+            background-color: #fee2e2; /* bg-red-100 */
+            color: #b91c1c; /* text-red-700 */
+            border: 1px solid #fca5a5; /* border-red-400 */
+        }
+
+        .alert-success {
+            background-color: #dcfce7; /* bg-green-100 */
+            color: #16a34a; /* text-green-700 */
+            border: 1px solid #86efac; /* border-green-400 */
+        }
+
+        /* Text Styles */
+        .text-xs {
+            font-size: 12px; /* text-xs */
+        }
+
+        .text-gray-500 {
+            color: #6b7280; /* text-gray-500 */
+        }
+
+        .text-gray-600 {
+            color: #4b5563; /* text-gray-600 */
+        }
+
+        .text-blue-600 {
+            color: #2563eb; /* text-blue-600 */
+        }
+
+        .hover-underline:hover {
+            text-decoration: underline; /* hover:underline */
+        }
+
+        /* Loader Spinner */
+        .loader {
+            border: 2px solid #f3f3f3; /* Light grey */
+            border-top: 2px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 16px; /* h-4 w-4 */
+            height: 16px;
+            animation: spin 1s linear infinite;
+            margin-right: 8px; /* mr-2 */
+            display: none; /* Hidden by default */
+        }
+
+        .loader.show {
+            display: block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Link Styles */
+        a {
+            text-decoration: none;
+        }
+
+        /* Specific Select Styling (simplified from shadcn/ui) */
+        .select-wrapper {
+            position: relative;
+        }
+
+        .select-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            /* Inherits input styles */
+        }
+
+        .select-value {
+            flex-grow: 1;
+        }
+
+        /* Hide default arrow for select */
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236B7280%22%20d%3D%22M287%2C197.9L159.3%2C69.2c-3.7-3.7-9.7-3.7-13.4%2C0L5.4%2C197.9c-3.7%2C3.7-3.7%2C9.7%2C0%2C13.4l13.4%2C13.4c3.7%2C3.7%2C9.7%2C3.7%2C13.4%2C0l110.7-110.7l110.7%2C110.7c3.7%2C3.7%2C9.7%2C3.7%2C13.4%2C0l13.4-13.4C290.7%2C207.6%2C290.7%2C201.6%2C287%2C197.9z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 12px;
+            padding-right: 30px; /* Make space for the custom arrow */
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Вход в кабинет</h2>
+            <p class="card-description">Заполните все поля для входа</p>
+        </div>
+        <div class="card-content">
+            <div id="error-alert" class="alert alert-destructive" style="display: none;">
+                <p class="alert-description"></p>
+            </div>
+
+            <div id="success-alert" class="alert alert-success" style="display: none;">
+                <p class="alert-description"></p>
+            </div>
+
+            <form id="login-form" class="space-y-4">
+                <div class="space-y-2">
+                    <label for="phone">Номер телефона *</label>
+                    <input
+                        id="phone"
+                        type="tel"
+                        placeholder="+7 (999) 123-45-67"
+                        required
+                    />
+                </div>
+
+                <div class="space-y-2">
+                    <label for="password">Пароль *</label>
+                    <input
+                        id="password"
+                        type="password"
+                        placeholder="Минимум 6 символов"
+                        required
+                    />
+                    <p class="text-xs text-gray-500">Минимум 6 символов</p>
+                </div>
+
+                <div class="space-y-2">
+                    <label for="smsMethod">Способ получения кода *</label>
+                    <select id="smsMethod" required>
+                        <option value="phone">SMS на телефон</option>
+                        <option value="telegram">Telegram</option>
+                    </select>
+                </div>
+
+                <button type="submit" id="login-button">
+                    <span class="loader" id="login-loader"></span>
+                    Отправить код подтверждения
+                </button>
+            </form>
+
+            <form id="confirm-code-form" class="space-y-4" style="display: none;">
+                <div class="space-y-2">
+                    <label for="smsCode">Введите код подтверждения</label>
+                    <input
+                        id="smsCode"
+                        type="text"
+                        placeholder="Введите код"
+                        maxlength="4"
+                        required
+                    />
+                </div>
+
+                <button type="submit" id="confirm-button">
+                    <span class="loader" id="confirm-loader"></span>
+                    Подтвердить код
+                </button>
+
+                <button type="button" class="outline" id="back-button">
+                    Назад к форме входа
+                </button>
+            </form>
+
+            <div class="mt-6 text-center" style="margin-top: 24px;">
+                <p class="text-sm text-gray-600">
+                    Нет аккаунта?
+                    <a href="/auth/register" class="text-blue-600 hover-underline">
+                        Зарегистрироваться
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State variables
+        let loading = false;
+        let error = "";
+        let success = "";
+        let showCodeInput = false;
+        let smsCode = "";
+        let formData = {
+            phone: "",
+            password: "",
+            smsMethod: "phone", // phone или telegram
+        };
+
+        // Get DOM elements
+        const loginForm = document.getElementById('login-form');
+        const confirmCodeForm = document.getElementById('confirm-code-form');
+        const phoneInput = document.getElementById('phone');
+        const passwordInput = document.getElementById('password');
+        const smsMethodSelect = document.getElementById('smsMethod');
+        const smsCodeInput = document.getElementById('smsCode');
+        const loginButton = document.getElementById('login-button');
+        const confirmButton = document.getElementById('confirm-button');
+        const backButton = document.getElementById('back-button');
+        const errorAlert = document.getElementById('error-alert');
+        const errorAlertDescription = errorAlert.querySelector('.alert-description');
+        const successAlert = document.getElementById('success-alert');
+        const successAlertDescription = successAlert.querySelector('.alert-description');
+        const loginLoader = document.getElementById('login-loader');
+        const confirmLoader = document.getElementById('confirm-loader');
+
+        // Function to update UI based on state
+        function updateUI() {
+            // Show/hide forms
+            loginForm.style.display = showCodeInput ? 'none' : 'block';
+            confirmCodeForm.style.display = showCodeInput ? 'block' : 'none';
+
+            // Update input values
+            phoneInput.value = formData.phone;
+            passwordInput.value = formData.password;
+            smsMethodSelect.value = formData.smsMethod;
+            smsCodeInput.value = smsCode;
+
+            // Display error message
+            if (error) {
+                errorAlertDescription.textContent = error;
+                errorAlert.style.display = 'block';
+            } else {
+                errorAlert.style.display = 'none';
+            }
+
+            // Display success message
+            if (success) {
+                successAlertDescription.textContent = success;
+                successAlert.style.display = 'block';
+            } else {
+                successAlert.style.display = 'none';
+            }
+
+            // Manage loading state for buttons and loaders
+            loginButton.disabled = loading;
+            confirmButton.disabled = loading;
+            backButton.disabled = loading;
+
+            if (loading) {
+                if (!showCodeInput) { // If on login form
+                    loginLoader.classList.add('show');
+                    loginButton.childNodes[1].nodeValue = ' Отправка...'; // Update button text
+                } else { // If on confirm code form
+                    confirmLoader.classList.add('show');
+                    confirmButton.childNodes[1].nodeValue = ' Подтверждение...'; // Update button text
+                }
+            } else {
+                loginLoader.classList.remove('show');
+                confirmLoader.classList.remove('show');
+                loginButton.childNodes[1].nodeValue = ' Отправить код подтверждения';
+                confirmButton.childNodes[1].nodeValue = ' Подтвердить код';
+            }
+        }
+
+        // Handle input changes
+        phoneInput.addEventListener('input', (e) => {
+            formatPhoneNumber(e.target);
+            formData.phone = e.target.value;
+            // No need to call updateUI here as it's just updating internal state
+        });
+
+        passwordInput.addEventListener('input', (e) => {
+            formData.password = e.target.value;
+            // No need to call updateUI here
+        });
+
+        smsMethodSelect.addEventListener('change', (e) => {
+            formData.smsMethod = e.target.value;
+            // No need to call updateUI here
+        });
+
+        smsCodeInput.addEventListener('input', (e) => {
+            smsCode = e.target.value;
+            // No need to call updateUI here
+        });
+
+        // Handle Login Form Submission
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            loading = true;
+            error = "";
+            success = "";
+            updateUI();
+
+            try {
+                const cleanPhone = formData.phone.replace(/\D/g, "");
+
+                if (!formData.phone || !formData.password || !formData.smsMethod) {
+                    error = "Все поля обязательны для заполнения";
+                    loading = false;
+                    updateUI();
+                    return;
+                }
+
+                // Simulate network delay
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Проверяем пользователя в localStorage
+                const users = JSON.parse(localStorage.getItem("easgik_users") || "[]");
+                const user = users.find((u) => u.phone === cleanPhone);
+
+                if (user && user.password === formData.password) {
+                    // Отправляем код подтверждения
+                    showCodeInput = true;
+                    const testCode = formData.smsMethod === "phone" ? "1234" : "5678";
+                    success = `Тестовый код отправлен ${formData.smsMethod === "phone" ? "по SMS" : "в Telegram"}: ${testCode}`;
+                } else {
+                    error = "Неверный номер телефона или пароль";
+                }
+            } catch (err) {
+                console.error(err);
+                error = "Произошла ошибка при входе";
+            } finally {
+                loading = false;
+                updateUI();
+            }
+        });
+
+        // Handle Confirm Code Form Submission
+        confirmCodeForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            loading = true;
+            error = "";
+            success = "";
+            updateUI();
+
+            try {
+                // Simulate network delay
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                const expectedCode = formData.smsMethod === "phone" ? "1234" : "5678";
+
+                if (smsCode === expectedCode) {
+                    const cleanPhone = formData.phone.replace(/\D/g, "");
+                    const users = JSON.parse(localStorage.getItem("easgik_users") || "[]");
+                    const user = users.find((u) => u.phone === cleanPhone);
+
+                    localStorage.setItem("currentUser", JSON.stringify(user));
+                    window.location.href = "/dashboard"; // Simulate router.push
+                } else {
+                    error = "Неверный код подтверждения";
+                }
+            } catch (err) {
+                console.error(err);
+                error = "Ошибка подтверждения кода";
+            } finally {
+                loading = false;
+                updateUI();
+            }
+        });
+
+        // Handle "Back to login form" button click
+        backButton.addEventListener('click', () => {
+            showCodeInput = false;
+            smsCode = "";
+            success = ""; // Clear success message when going back
+            error = ""; // Clear error message when going back
+            updateUI();
+        });
+
+        // Initial UI update on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Populate some dummy users for testing if localStorage is empty
+            if (!localStorage.getItem("easgik_users")) {
+                const dummyUsers = [
+                    { phone: "1234567890", password: "password123", name: "Test User" },
+                    { phone: "9876543210", password: "anotherpassword", name: "Another User" }
+                ];
+                localStorage.setItem("easgik_users", JSON.stringify(dummyUsers));
+            }
+            updateUI();
+        });
+
+        function formatPhoneNumber(input) {
+            // Удаляем все нецифровые символы
+            let numbers = input.value.replace(/\D/g, '');
+
+            // Ограничиваем длину номера
+            if (numbers.length > 11) {
+                numbers = numbers.substring(0, 11);
+            }
+
+            // Форматируем номер
+            let formatted = '';
+            if (numbers.length > 0) {
+                formatted = '+7 (';
+                if (numbers.length > 1) {
+                    formatted += numbers.substring(1, 4);
+                }
+                if (numbers.length > 4) {
+                    formatted += ') ' + numbers.substring(4, 7);
+                }
+                if (numbers.length > 7) {
+                    formatted += '-' + numbers.substring(7, 9);
+                }
+                if (numbers.length > 9) {
+                    formatted += '-' + numbers.substring(9, 11);
+                }
+            }
+
+            // Устанавливаем отформатированное значение
+            input.value = formatted;
+        }
+    </script>
+</body>
+</html>
