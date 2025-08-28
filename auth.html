@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Аутентификация</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f3f4f6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      width: 100%;
+      max-width: 480px;
+      padding: 1.5rem;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #374151;
+    }
+    .form-input, .form-select {
+      display: block;
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 1rem;
+      outline: none;
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.5);
+    }
+    .btn {
+      width: 100%;
+      padding: 0.75rem;
+      font-weight: 600;
+      color: #ffffff;
+      background-color: #2563eb;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .btn:hover {
+      background-color: #1d4ed8;
+    }
+    .btn:disabled {
+      background-color: #9ca3af;
+      cursor: not-allowed;
+    }
+    .btn-outline {
+      background-color: transparent;
+      color: #374151;
+      border: 1px solid #d1d5db;
+    }
+    .btn-outline:hover:enabled {
+      background-color: #f3f4f6;
+    }
+    .alert {
+      padding: 1rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+    }
+    .alert-error {
+      background-color: #fee2e2;
+      color: #dc2626;
+    }
+    .alert-success {
+      background-color: #d1fae5;
+      color: #059669;
+    }
+    .loader {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 0.5rem;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app" class="card">
+    <!-- Формы будут отрисованы здесь с помощью JavaScript -->
+  </div>
+
+<script>
+  // =================================================================
+  // JavaScript логика
+  // =================================================================
+
+  const app = document.getElementById('app');
+  let view = 'login'; // 'login' or 'register'
+
+  // Локальное хранилище данных (вместо стейта React)
+  let state = {
+    loading: false,
+    error: '',
+    success: '',
+    showCodeInput: false,
+    smsCode: '',
+    formData: {
+      phone: '',
+      password: '',
+      confirmPassword: '',
+      smsMethod: 'phone',
+    }
+  };
+
+  // Компоненты UI (функции для отрисовки)
+  const renderCardHeader = (title, description) => `
+    <div class="text-center pb-4">
+      <h1 class="text-2xl font-bold">${title}</h1>
+      <p class="text-sm text-gray-600">${description}</p>
+    </div>
+  `;
+
+  const renderAlert = (message, type) => {
+    if (!message) return '';
+    const alertClass = type === 'error' ? 'alert-error' : 'alert-success';
+    return `<div class="alert ${alertClass}">${message}</div>`;
+  };
+
+  const renderAuthLink = (text, href) => `
+    <div class="mt-6 text-center">
+      <p class="text-sm text-gray-600">
+        ${text}
+        <a href="#" class="text-blue-600 hover:underline" onclick="switchView('${href}')">
+          ${href === 'register' ? 'Зарегистрироваться' : 'Войти'}
+        </a>
+      </p>
+    </div>
+  `;
+
+  const renderLoader = () => state.loading ? '<div class="loader"></div>' : '';
+
+  const renderLoginView = () => `
+    ${renderCardHeader('Вход в кабинет', 'Заполните все поля для входа')}
+    <div class="p-4">
+      ${renderAlert(state.error, 'error')}
+      ${renderAlert(state.success, 'success')}
+
+      ${!state.showCodeInput ? `
+        <form id="login-form">
+          <div class="form-group">
+            <label for="phone" class="form-label">Номер телефона *</label>
+            <input type="tel" id="phone" class="form-input" placeholder="+7 (999) 123-45-67" value="${state.formData.phone}" required>
+          </div>
+          <div class="form-group">
+            <label for="password" class="form-label">Пароль *</label>
+            <input type="password" id="password" class="form-input" placeholder="Минимум 6 символов" value="${state.formData.password}" required>
+            <p class="text-xs text-gray-500 mt-1">Минимум 6 символов</p>
+          </div>
+          <div class="form-group">
+            <label for="smsMethod" class="form-label">Способ получения кода *</label>
+            <select id="smsMethod" class="form-select">
+              <option value="phone" ${state.formData.smsMethod === 'phone' ? 'selected' : ''}>SMS на телефон</option>
+              <option value="telegram" ${state.formData.smsMethod === 'telegram' ? 'selected' : ''}>Telegram</option>
+            </select>
+          </div>
+          <button type="submit" class="btn mt-4" ${state.loading ? 'disabled' : ''}>
+            ${renderLoader()}
+            Отправить код подтверждения
+          </button>
+        </form>
+      ` : `
+        <form id="confirm-login-form">
+          <div class="form-group">
+            <label for="smsCode" class="form-label">Введите код подтверждения</label>
+            <input type="text" id="smsCode" class="form-input" placeholder="Введите код" maxlength="4" value="${state.smsCode}" required>
+          </div>
+          <button type="submit" class="btn mt-4" ${state.loading ? 'disabled' : ''}>
+            ${renderLoader()}
+            Подтвердить код
+          </button>
+          <button type="button" class="btn btn-outline mt-2" onclick="handleBackToLogin()">
+            Назад к форме входа
+          </button>
+        </form>
+      `}
+      ${renderAuthLink('Нет аккаунта?', 'register')}
+    </div>
+  `;
+
+  const renderRegisterView = () => `
+    ${renderCardHeader('Регистрация', 'Создайте аккаунт для доступа к личному кабинету')}
+    <div class="p-4">
+      ${renderAlert(state.error, 'error')}
+      ${renderAlert(state.success, 'success')}
+
+      ${!state.showCodeInput ? `
+        <form id="register-form">
+          <div class="form-group">
+            <label for="reg-phone" class="form-label">Номер телефона</label>
+            <input type="tel" id="reg-phone" class="form-input" name="phone" placeholder="+7 (999) 123-45-67" value="${state.formData.phone}" required>
+          </div>
+          <div class="form-group">
+            <label for="reg-password" class="form-label">Пароль</label>
+            <input type="password" id="reg-password" class="form-input" name="password" placeholder="Минимум 6 символов" value="${state.formData.password}" required>
+          </div>
+          <div class="form-group">
+            <label for="reg-confirmPassword" class="form-label">Подтвердите пароль</label>
+            <input type="password" id="reg-confirmPassword" class="form-input" name="confirmPassword" placeholder="Повторите пароль" value="${state.formData.confirmPassword}" required>
+          </div>
+          <div class="form-group">
+            <label for="reg-smsMethod" class="form-label">Способ получения кода</label>
+            <select id="reg-smsMethod" class="form-select">
+              <option value="phone" ${state.formData.smsMethod === 'phone' ? 'selected' : ''}>SMS на телефон</option>
+              <option value="telegram" ${state.formData.smsMethod === 'telegram' ? 'selected' : ''}>Telegram</option>
+            </select>
+          </div>
+          <button type="submit" class="btn mt-4" ${state.loading ? 'disabled' : ''}>
+            ${renderLoader()}
+            Отправить код подтверждения
+          </button>
+        </form>
+      ` : `
+        <form id="confirm-register-form">
+          <div class="form-group">
+            <label for="sms-code" class="form-label">Код подтверждения</label>
+            <input type="text" id="sms-code" class="form-input" placeholder="1234" maxlength="4" value="${state.smsCode}" required>
+            <p class="text-sm text-gray-600 mt-1">
+              Код отправлен ${state.formData.smsMethod === "phone" ? "по SMS" : "в Telegram"} на ${state.formData.phone}
+            </p>
+          </div>
+          <button type="submit" class="btn mt-4" ${state.loading ? 'disabled' : ''}>
+            ${renderLoader()}
+            Завершить регистрацию
+          </button>
+          <button type="button" class="btn btn-outline mt-2" onclick="handleBackToRegister()">
+            Изменить данные
+          </button>
+        </form>
+      `}
+      ${renderAuthLink('Уже есть аккаунт?', 'login')}
+    </div>
+  `;
+
+  // Функция для обновления DOM и перерисовки
+  const renderApp = () => {
+    app.innerHTML = view === 'login' ? renderLoginView() : renderRegisterView();
+    attachEventListeners();
+  };
+
+  const setState = (newState) => {
+    state = { ...state, ...newState };
+    // Перерисовываем только при смене представления или других важных изменениях
+    renderApp();
+  };
+
+  // Переключение между формами
+  window.switchView = (newView) => {
+    view = newView;
+    state = { // Сбрасываем все состояние
+      loading: false,
+      error: '',
+      success: '',
+      showCodeInput: false,
+      smsCode: '',
+      formData: {
+        phone: '',
+        password: '',
+        confirmPassword: '',
+        smsMethod: 'phone',
+      }
+    };
+    renderApp();
+  };
+
+  // =================================================================
+  // Логика обработки форм
+  // =================================================================
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    setState({ loading: true, error: '', success: '' });
+
+    const phone = document.getElementById('phone').value;
+    const password = document.getElementById('password').value;
+    const smsMethod = document.getElementById('smsMethod').value;
+    const cleanPhone = phone.replace(/\D/g, "");
+
+    if (!phone || !password || !smsMethod) {
+      setState({ error: 'Все поля обязательны для заполнения', loading: false });
+      return;
+    }
+
+    try {
+      const users = JSON.parse(localStorage.getItem("easgik_users") || "[]");
+      const user = users.find(u => u.phone === cleanPhone);
+
+      if (user && user.password === password) {
+        setState({
+          showCodeInput: true,
+          success: `Тестовый код отправлен ${smsMethod === "phone" ? "по SMS" : "в Telegram"}: ${smsMethod === "phone" ? "1234" : "5678"}`,
+          formData: { ...state.formData, phone, password, smsMethod }
+        });
+      } else {
+        setState({ error: 'Неверный номер телефона или пароль' });
+      }
+    } catch (err) {
+      console.error(err);
+      setState({ error: 'Произошла ошибка при входе' });
+    } finally {
+      setState({ loading: false });
+    }
+  };
+
+  const handleConfirmCode = (e) => {
+    e.preventDefault();
+    setState({ loading: true, error: '', success: '' });
+
+    const smsCode = document.getElementById('smsCode').value;
+    const expectedCode = state.formData.smsMethod === "phone" ? "1234" : "5678";
+
+    try {
+      if (smsCode === expectedCode) {
+        const cleanPhone = state.formData.phone.replace(/\D/g, "");
+        const users = JSON.parse(localStorage.getItem("easgik_users") || "[]");
+        const user = users.find(u => u.phone === cleanPhone);
+        localStorage.setItem("currentUser", JSON.stringify(user));
+
+        // Имитация перенаправления
+        window.location.href = '#dashboard';
+      } else {
+        setState({ error: 'Неверный код подтверждения' });
+      }
+    } catch (err) {
+      console.error(err);
+      setState({ error: 'Ошибка подтверждения кода' });
+    } finally {
+      setState({ loading: false });
+    }
+  };
+
+  const handleBackToLogin = () => {
+    setState({
+      showCodeInput: false,
+      smsCode: "",
+      success: "",
+    });
+  };
+
+  const handleRegister = (e) => {
+    e.preventDefault();
+    setState({ loading: true, error: '', success: '' });
+
+    const phone = document.getElementById('reg-phone').value;
+    const password = document.getElementById('reg-password').value;
+    const confirmPassword = document.getElementById('reg-confirmPassword').value;
+    const smsMethod = document.getElementById('reg-smsMethod').value;
+
+    if (password !== confirmPassword) {
+      setState({ error: 'Пароли не совпадают', loading: false });
+      return;
+    }
+    if (password.length < 6) {
+      setState({ error: 'Пароль должен содержать минимум 6 символов', loading: false });
+      return;
+    }
+    const cleanPhone = phone.replace(/\D/g, "");
+    if (!cleanPhone || cleanPhone.length < 10) {
+      setState({ error: 'Введите корректный номер телефона', loading: false });
+      return;
+    }
+
+    try {
+      const users = JSON.parse(localStorage.getItem("easgik_users") || "[]");
+      const existingUser = users.find(u => u.phone === cleanPhone);
+
+      if (existingUser) {
+        setState({ error: 'Пользователь с таким номером телефона уже существует', loading: false });
+        return;
+      }
+
+      setState({
+        formData: { ...state.formData, phone, password, confirmPassword, smsMethod },
+        showCodeInput: true,
+        success: `Тестовый код отправлен ${smsMethod === "phone" ? "по SMS" : "в Telegram"}: 1234`
+      });
+    } catch (err) {
+      console.error(err);
+      setState({ error: 'Ошибка отправки кода' });
+    } finally {
+      setState({ loading: false });
+    }
+  };
+
+  const handleConfirmRegistration = (e) => {
+    e.preventDefault();
+    setState({ loading: true, error: '', success: '' });
+
+    const smsCode = document.getElementById('sms-code').value;
+
+    try {
+      if (smsCode === "1234") {
+        const cleanPhone = state.formData.phone.replace(/\D/g, "");
+        const users = JSON.parse(localStorage.getItem("easgik_users") || "[]");
+        const newUser = {
+          id: Date.now().toString(),
+          phone: cleanPhone,
+          fullPhone: state.formData.phone,
+          password: state.formData.password,
+          sms_method: state.formData.smsMethod,
+          created_at: new Date().toISOString(),
+        };
+
+        users.push(newUser);
+        localStorage.setItem("easgik_users", JSON.stringify(users));
+        localStorage.setItem("currentUser", JSON.stringify(newUser));
+
+        setState({ success: 'Регистрация успешна! Перенаправляем в личный кабинет...' });
+        setTimeout(() => {
+          // Имитация перенаправления
+          window.location.href = '#dashboard';
+        }, 2000);
+      } else {
+        setState({ error: 'Неверный код' });
+      }
+    } catch (err) {
+      console.error(err);
+      setState({ error: 'Ошибка подтверждения регистрации' });
+    } finally {
+      setState({ loading: false });
+    }
+  };
+
+  const handleBackToRegister = () => {
+    setState({
+      showCodeInput: false,
+      smsCode: "",
+      success: "",
+    });
+  };
+
+  // Функция для форматирования номера телефона
+  const formatPhoneNumber = (value) => {
+      const cleaned = value.replace(/\D/g, '');
+      let formatted = '';
+
+      if (cleaned.length > 0) {
+        formatted += '+7';
+      }
+      if (cleaned.length > 1) {
+        formatted += ` (${cleaned.slice(1, 4)}`;
+      }
+      if (cleaned.length >= 5) {
+        formatted += `) ${cleaned.slice(4, 7)}`;
+      }
+      if (cleaned.length >= 8) {
+        formatted += `-${cleaned.slice(7, 9)}`;
+      }
+      if (cleaned.length >= 10) {
+        formatted += `-${cleaned.slice(9, 11)}`;
+      }
+
+      return formatted;
+  };
+
+  // Прикрепляем слушатели событий
+  const attachEventListeners = () => {
+    // Вход в кабинет
+    const phoneInput = document.getElementById('phone');
+    if (phoneInput) {
+      phoneInput.addEventListener('input', (e) => {
+        const target = e.target;
+        const oldVal = target.value;
+        const oldCursor = target.selectionStart;
+
+        const cleanedVal = oldVal.replace(/\D/g, '');
+        const newFormattedVal = formatPhoneNumber(cleanedVal);
+        
+        target.value = newFormattedVal;
+        state.formData.phone = newFormattedVal;
+
+        // Корректная установка курсора
+        let newCursor = oldCursor + (newFormattedVal.length - oldVal.length);
+        
+        // Учет скобок и дефисов
+        if (newFormattedVal.length > 4 && oldVal.length <= 4) {
+          newCursor += 2; // + ')' и ' '
+        }
+        if (newFormattedVal.length > 9 && oldVal.length <= 9) {
+          newCursor += 1; // + '-'
+        }
+        if (newFormattedVal.length > 12 && oldVal.length <= 12) {
+          newCursor += 1; // + '-'
+        }
+        
+        target.setSelectionRange(newCursor, newCursor);
+      });
+
+      document.getElementById('password').addEventListener('input', (e) => {
+        state.formData.password = e.target.value;
+      });
+      document.getElementById('smsMethod').addEventListener('change', (e) => {
+        state.formData.smsMethod = e.target.value;
+      });
+      const loginForm = document.getElementById('login-form');
+      if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+      }
+    }
+
+    const confirmLoginForm = document.getElementById('confirm-login-form');
+    if (confirmLoginForm) {
+      confirmLoginForm.addEventListener('submit', handleConfirmCode);
+      document.getElementById('smsCode').addEventListener('input', (e) => {
+        state.smsCode = e.target.value;
+      });
+    }
+
+    // Регистрация
+    const regPhoneInput = document.getElementById('reg-phone');
+    if (regPhoneInput) {
+      regPhoneInput.addEventListener('input', (e) => {
+        const target = e.target;
+        const oldVal = target.value;
+        const oldCursor = target.selectionStart;
+
+        const cleanedVal = oldVal.replace(/\D/g, '');
+        const newFormattedVal = formatPhoneNumber(cleanedVal);
+        
+        target.value = newFormattedVal;
+        state.formData.phone = newFormattedVal;
+        
+        // Корректная установка курсора
+        let newCursor = oldCursor + (newFormattedVal.length - oldVal.length);
+
+        if (newFormattedVal.length > 4 && oldVal.length <= 4) {
+          newCursor += 2;
+        }
+        if (newFormattedVal.length > 9 && oldVal.length <= 9) {
+          newCursor += 1;
+        }
+        if (newFormattedVal.length > 12 && oldVal.length <= 12) {
+          newCursor += 1;
+        }
+        
+        target.setSelectionRange(newCursor, newCursor);
+      });
+
+      document.getElementById('reg-password').addEventListener('input', (e) => {
+        state.formData.password = e.target.value;
+      });
+      document.getElementById('reg-confirmPassword').addEventListener('input', (e) => {
+        state.formData.confirmPassword = e.target.value;
+      });
+      document.getElementById('reg-smsMethod').addEventListener('change', (e) => {
+        state.formData.smsMethod = e.target.value;
+      });
+      const registerForm = document.getElementById('register-form');
+      if (registerForm) {
+        registerForm.addEventListener('submit', handleRegister);
+      }
+    }
+
+    const confirmRegisterForm = document.getElementById('confirm-register-form');
+    if (confirmRegisterForm) {
+      confirmRegisterForm.addEventListener('submit', handleConfirmRegistration);
+      document.getElementById('sms-code').addEventListener('input', (e) => {
+        state.smsCode = e.target.value;
+      });
+    }
+  };
+
+  // Начальная отрисовка
+  renderApp();
+</script>
+
+</body>
+</html>
