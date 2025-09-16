@@ -14,16 +14,32 @@ services:
       - ./u1957399_mini_crm.sql:/docker-entrypoint-initdb.d/u1957399_mini_crm.sql
       - db_data:/var/lib/mysql
 
+  backend:
+    build: ./backend
+    container_name: backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      MYSQL_USER: crm_user
+      MYSQL_PASSWORD: crm_password
+      MYSQL_HOST: db
+      MYSQL_DATABASE: u1957399_mini_crm
+    depends_on:
+      - db
+
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: frontend
     restart: always
     ports:
-      - "80:80"
-    # depends_on:
-    #   - backend
-    volumes:
-      - ./frontend:/usr/share/nginx/html
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - backend
 
 volumes:
   db_data:
