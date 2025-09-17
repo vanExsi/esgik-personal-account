@@ -25,6 +25,8 @@ services:
       MYSQL_PASSWORD: crm_password
       MYSQL_HOST: db
       MYSQL_DATABASE: u1957399_mini_crm
+    volumes:
+      - ./backend/app:/app/app
     depends_on:
       - db
 

@@ -31,30 +31,24 @@ export default function LoginForm() {
     e.preventDefault()
     setLoading(true)
     setError("")
+    setSuccess("")
 
     try {
-      const cleanPhone = formData.phone.replace(/\D/g, "")
+      const res = await fetch("http://localhost:8000/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: formData.phone, password: formData.password })
+      })
 
-      if (!formData.phone || !formData.password || !formData.smsMethod) {
-        setError("Все поля обязательны для заполнения")
-        setLoading(false)
-        return
-      }
-
-      // Проверяем пользователя в localStorage
-      const users = JSON.parse(localStorage.getItem("easgik_users") || "[]")
-      const user = users.find((u: any) => u.phone === cleanPhone)
-
-      if (user && user.password === formData.password) {
-        // Отправляем код подтверждения
-        setShowCodeInput(true)
-        const testCode = formData.smsMethod === "phone" ? "1234" : "5678"
-        setSuccess(`Тестовый код отправлен ${formData.smsMethod === "phone" ? "по SMS" : "в Telegram"}: ${testCode}`)
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.detail || "Ошибка при входе")
       } else {
-        setError("Неверный номер телефона или пароль")
+        setShowCodeInput(true)
+        setSuccess(data.message)
       }
-    } catch (err) {
-      setError("Произошла ошибка при входе")
+    } catch {
+      setError("Ошибка подключения к серверу")
     } finally {
       setLoading(false)
     }
@@ -64,26 +58,35 @@ export default function LoginForm() {
     e.preventDefault()
     setLoading(true)
     setError("")
+    setSuccess("")
 
     try {
-      const expectedCode = formData.smsMethod === "phone" ? "1234" : "5678"
+      const res = await fetch("http://localhost:8000/auth/login-confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: formData.phone,
+          password: formData.password,
+          code: smsCode
+        })
+      })
 
-      if (smsCode === expectedCode) {
-        const cleanPhone = formData.phone.replace(/\D/g, "")
-        const users = JSON.parse(localStorage.getItem("easgik_users") || "[]")
-        const user = users.find((u: any) => u.phone === cleanPhone)
-
-        localStorage.setItem("currentUser", JSON.stringify(user))
-        router.push("/dashboard")
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.detail || "Неверный код")
       } else {
-        setError("Неверный код подтверждения")
+        localStorage.setItem("access_token", data.access_token)
+        localStorage.setItem("currentUser", JSON.stringify({ id: data.user_id, phone: formData.phone }))
+        router.push("/dashboard")
       }
-    } catch (err) {
-      setError("Ошибка подтверждения кода")
+    } catch {
+      setError("Ошибка подключения к серверу")
     } finally {
       setLoading(false)
     }
   }
+
+
 
   return (
     <Card className="w-full max-w-md">

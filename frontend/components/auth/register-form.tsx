@@ -57,24 +57,20 @@ export default function RegisterForm() {
     }
 
     try {
-      const users = JSON.parse(localStorage.getItem("easgik_users") || "[]")
-      const cleanPhone = phone.replace(/\D/g, "")
-      const existingUser = users.find((u: any) => u.phone === cleanPhone)
+      const res = await fetch("http://localhost:8000/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Ошибка регистрации");
 
-      if (existingUser) {
-        setError("Пользователь с таким номером телефона уже существует")
-        setLoading(false)
-        return
-      }
+      setFormData({ phone, password, confirmPassword: password });
+      setShowSmsInput(true);
+      setSuccess(`Код отправлен ${smsMethod === "phone" ? "по SMS" : "в Telegram"}: ${data.code}`);
 
-      // Сохраняем данные формы
-      setFormData({ phone, password, confirmPassword })
-
-      // Отправляем SMS код (в демо показываем тестовый)
-      setShowSmsInput(true)
-      setSuccess(`Тестовый код отправлен ${smsMethod === "phone" ? "по SMS" : "в Telegram"}: 1234`)
-    } catch (err) {
-      setError("Ошибка отправки кода")
+    } catch (err: any) {
+      setError(err.message);
     } finally {
       setLoading(false)
     }
@@ -84,39 +80,34 @@ export default function RegisterForm() {
     e.preventDefault()
     setLoading(true)
     setError("")
+    setSuccess("")
 
     try {
-      // Проверяем тестовый код
-      if (smsCode === "1234") {
-        const cleanPhone = formData.phone.replace(/\D/g, "")
-
-        const users = JSON.parse(localStorage.getItem("easgik_users") || "[]")
-        const newUser = {
-          id: Date.now().toString(),
-          phone: cleanPhone,
-          fullPhone: formData.phone,
+      const res = await fetch("http://localhost:8000/auth/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: formData.phone,
           password: formData.password,
-          sms_method: smsMethod,
-          created_at: new Date().toISOString(),
-        }
+          code: smsCode
+        })
+      })
 
-        users.push(newUser)
-        localStorage.setItem("easgik_users", JSON.stringify(users))
-        localStorage.setItem("easgik_current_user", JSON.stringify(newUser))
-
-        setSuccess("Регистрация успешна! Перенаправляем в личный кабинет...")
-        setTimeout(() => {
-          router.push("/dashboard")
-        }, 2000)
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.detail || "Неверный код")
       } else {
-        setError("Неверный код")
+        localStorage.setItem("access_token", data.access_token)
+        localStorage.setItem("currentUser", JSON.stringify({ id: data.user_id, phone: formData.phone }))
+        router.push("/dashboard")
       }
     } catch (err) {
-      setError("Ошибка подтверждения регистрации")
+      setError("Ошибка подключения к серверу")
     } finally {
       setLoading(false)
     }
   }
+
 
   return (
     <Card className="w-full max-w-md">
